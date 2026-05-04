@@ -1,0 +1,2090 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="출고관리">
+    <meta name="theme-color" content="#0a0e27">
+    <meta name="description" content="수출/물류 담당자를 위한 출고 현황 관리 대시보드">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIu2Yh+2Y4OWInOuprCDtlIzsi5zrs7Trk5wiLAogICJzaG9ydF9uYW1lIjogIu2Hm+uvpOumrOumrCIsCiAgImRlc2NyaXB0aW9uIjogIuyImO2Jri/rprzrgpjsnbQg64u07u2VnOyekOulvCDsnITtlZwg7Jew2Hh67Yy+IOqyvOustOumrCDtmKjsiYDstpQg6rK07YKs66as7YKk66GsIiwKICAic3RhcnRfdXJsIjogIi4vIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMGEwZTI3IiwKICAidGhlbWVfY29sb3IiOiAiIzBhMGUyNyIsCiAgIm9yaWVudGF0aW9uIjogImFueSIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbCwlM0NzdmcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB2aWV3Qm94PScwIDAgNTEyIDUxMicgd2lkdGg9JzUxMicgaGVpZ2h0PSc1MTInJTNFJTNDcmVjdCB3aWR0aD0nNTEyJyBoZWlnaHQ9JzUxMicgZmlsbD0nJTIzMGEwZTI3Jy8lM0UlM0N0ZXh0IHg9JzUwJTI1JyB5PSc1MCUyNScgZm9udC1zaXplPScyMDAnIGZvbnQtZmFtaWx5PSdBcmlhbCcgZm9udC13ZWlnaHQ9J2JvbGQnIGZpbGw9JyUyMzAwZDRmZicgdGV4dC1hbmNob3I9J21pZGRsZScgZG9taW5hbnQtYmFzZWxpbmU9J21pZGRsZSclM0XstpzrhLglM0MvdGV4dCUzRSUzQy9zdmclM0UiLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiLAogICAgICAicHVycG9zZSI6ICJhbnkgbWFza2FibGUiCiAgICB9CiAgXQp9">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'%3E%3Crect width='512' height='512' fill='%230a0e27'/%3E%3Ctext x='50%25' y='50%25' font-size='200' font-family='Arial' font-weight='bold' fill='%2300d4ff' text-anchor='middle' dominant-baseline='middle'%3E출고%3C/text%3E%3C/svg%3E">
+    
+    <title>출고 현황 대시보드</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151932;
+            --bg-card: #1a1f3a;
+            --accent-blue: #00d4ff;
+            --accent-cyan: #00ffff;
+            --accent-green: #00ff88;
+            --accent-red: #ff3366;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --border-color: #2d3748;
+        }
+        body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
+        .container { max-width: 1920px; margin: 0 auto; padding: 20px; }
+        header { background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary)); padding: 2rem; border-bottom: 2px solid var(--accent-blue); margin-bottom: 2rem; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem; }
+        h1 { font-size: 2.5rem; background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stats-card { background: rgba(0, 212, 255, 0.1); border: 1px solid var(--accent-blue); border-radius: 12px; padding: 1.5rem 2rem; }
+        .stats-value { font-size: 2rem; font-weight: 700; color: var(--accent-blue); }
+        .legend-card { background: rgba(255, 165, 0, 0.1); border: 1px solid #ffa500; border-radius: 12px; padding: 1rem 1.5rem; }
+        .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-secondary); }
+        .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .legend-dot.warning { background: #ffa500; }
+        .legend-dot.urgent { background: var(--accent-red); animation: pulse 1.5s ease-in-out infinite; }
+        .upload-section { background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border: 2px dashed var(--border-color); margin-bottom: 2rem; }
+        .upload-btn { background: var(--accent-blue); color: #000; padding: 1rem 2rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+        .upload-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3); }
+        .filters { background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        select, input[type="date"], input[type="number"] { width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.75rem; border-radius: 8px; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        input[type="date"]:not([value]):before { content: attr(placeholder); color: var(--text-secondary); }
+        .date-input { background: rgba(26, 31, 58, 0.5); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.5rem; border-radius: 4px; min-width: 140px; }
+        .date-input:focus { outline: none; border-color: var(--accent-blue); background: var(--bg-card); }
+        .btn { padding: 0.75rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; transition: all 0.3s; }
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem; margin: 2rem 0; }
+        .chart-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+        .chart-container { position: relative; height: 300px; }
+        .table-section { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 1350px; }
+        th { background: var(--bg-secondary); padding: 0.6rem; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem; }
+        th:nth-child(8) { min-width: 110px; }  /* 모선명 */
+        th:nth-child(9) { min-width: 240px; }  /* 품목정보 */
+        th:nth-child(10), th:nth-child(11) { min-width: 130px; }  /* 서류마감, 카고마감 */
+        td { padding: 0.6rem; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; }
+        tbody tr:hover { background: rgba(0, 212, 255, 0.05); }
+        tbody tr.completed { background: rgba(128, 128, 128, 0.2); opacity: 0.7; }
+        tbody tr.cancelled { background: rgba(255, 51, 102, 0.1); opacity: 0.8; }
+        tbody tr.modified { border-left: 3px solid #ffd700; }
+        .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .status-badge:hover { transform: scale(1.05); }
+        .status-준비중 { background: rgba(0, 255, 136, 0.2); color: var(--accent-green); }
+        .status-출고완료 { background: rgba(128, 128, 128, 0.2); color: #888; }
+        .status-취소 { background: rgba(255, 51, 102, 0.2); color: var(--accent-red); }
+        .item-detail { padding: 0.4rem 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.85rem; display: grid; grid-template-columns: 90px 1fr 60px 45px 30px; gap: 0.3rem; align-items: center; }
+        .item-detail:last-child { border-bottom: none; }
+        .item-detail input { background: rgba(26, 31, 58, 0.5); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.35rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }
+        .item-detail input:focus { outline: none; border-color: var(--accent-blue); background: var(--bg-card); }
+        .item-detail input[type="number"] { text-align: right; }
+        .deadline-cell { position: relative; white-space: nowrap; }
+        .deadline-cell input[type="date"] { width: 125px; display: inline-block; }
+        td:nth-child(1) { min-width: 90px; }   /* 상태 */
+        td:nth-child(2) { min-width: 90px; }   /* ID */
+        td:nth-child(3) { min-width: 110px; }  /* 작업일 */
+        td:nth-child(4) { min-width: 90px; }   /* 유형 */
+        td:nth-child(5) { min-width: 80px; }   /* 업체명 */
+        td:nth-child(6) { min-width: 75px; }   /* 작업지 */
+        td:nth-child(7) { min-width: 75px; }   /* 선사 */
+        td:nth-child(8) { min-width: 110px; }  /* 모선명 */
+        td:nth-child(9) { min-width: 240px; }  /* 품목정보 */
+        td:nth-child(10), td:nth-child(11) { min-width: 130px; }  /* 서류마감, 카고마감 */
+        .modified-cell { color: #ffd700 !important; }
+        .modified-cell input { color: #ffd700 !important; font-weight: 600; }
+        .modified-cell .status-badge { color: #ffd700 !important; border: 1px solid #ffd700; font-weight: 700; }
+        .deadline-normal { color: var(--text-secondary); }
+        .deadline-warning { color: #ffa500; font-weight: 600; }
+        .deadline-urgent { color: var(--accent-red); font-weight: 700; animation: pulse 1.5s ease-in-out infinite; }
+        .deadline-passed { color: #666; text-decoration: line-through; }
+        .deadline-badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.75rem; margin-left: 0.5rem; font-weight: 600; }
+        .badge-d3 { background: rgba(255, 165, 0, 0.2); color: #ffa500; }
+        .badge-d2 { background: rgba(255, 51, 102, 0.2); color: var(--accent-red); }
+        .badge-dday { background: var(--accent-red); color: #fff; animation: pulse 1.5s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .simulator-section { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; }
+        .simulator-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+        .added-items { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin: 1rem 0; max-height: 400px; overflow-y: auto; }
+        .added-items::-webkit-scrollbar { width: 8px; }
+        .added-items::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
+        .added-items::-webkit-scrollbar-thumb { background: var(--accent-blue); border-radius: 4px; }
+        .added-items::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
+        .item-row { display: flex; justify-content: space-between; padding: 0.75rem; background: var(--bg-card); border-radius: 6px; margin-bottom: 0.5rem; align-items: flex-start; }
+        .item-row:hover { background: rgba(0, 212, 255, 0.05); }
+        .simulator-result { background: rgba(0, 255, 136, 0.1); border: 1px solid var(--accent-green); border-radius: 8px; padding: 1.5rem; margin-top: 1.5rem; display: none; max-height: 600px; overflow-y: auto; }
+        .simulator-result::-webkit-scrollbar { width: 8px; }
+        .simulator-result::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
+        .simulator-result::-webkit-scrollbar-thumb { background: var(--accent-blue); border-radius: 4px; }
+        .simulator-result::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
+        .simulator-result.show { display: block; }
+        .result-item { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        
+        /* 모바일 최적화 스타일 */
+        @media (max-width: 768px) {
+            body { font-size: 14px; }
+            .container { padding: 10px; }
+            header { padding: 1rem; }
+            h1 { font-size: 1.5rem; }
+            .header-content { flex-direction: column; gap: 1rem; }
+            .stats-card { padding: 1rem; }
+            
+            /* 버튼 크기 조정 */
+            button { min-height: 44px; font-size: 14px; padding: 0.5rem 1rem; }
+            
+            /* 테이블 가로 스크롤 */
+            .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            table { min-width: 1200px; font-size: 12px; }
+            th, td { padding: 0.5rem; }
+            input, select { font-size: 14px; min-height: 38px; }
+            
+            /* 차트 영역 */
+            .charts-grid { grid-template-columns: 1fr; gap: 1rem; }
+            
+            /* 필터 영역 */
+            .filters-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+            
+            /* 시뮬레이터 */
+            .simulator-inputs { grid-template-columns: 1fr; }
+            
+            /* 모바일에서 불필요한 마진 제거 */
+            .filter-section, .simulator-section { margin: 1rem 0; }
+        }
+        
+        /* 터치 최적화 */
+        @media (hover: none) and (pointer: coarse) {
+            button, .status-badge, input, select { 
+                min-height: 44px; 
+                touch-action: manipulation; 
+            }
+        }
+        
+        /* PWA 전체화면 모드 */
+        @media all and (display-mode: standalone) {
+            body { padding-top: env(safe-area-inset-top); }
+            .container { padding-bottom: env(safe-area-inset-bottom); }
+        }
+        
+        /* iOS Safari 하단 바 대응 */
+        @supports (padding: max(0px)) {
+            .container { padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+        }
+        
+        /* 설치 배너 스타일 */
+        .install-banner { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)); 
+            color: #000; 
+            padding: 1rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            z-index: 1000; 
+            transform: translateY(100%); 
+            transition: transform 0.3s ease; 
+        }
+        .install-banner.show { transform: translateY(0); }
+        .install-banner button { 
+            background: #000; 
+            color: var(--accent-blue); 
+            border: none; 
+            padding: 0.5rem 1.5rem; 
+            border-radius: 8px; 
+            font-weight: 700; 
+            cursor: pointer; 
+        }
+        .install-banner .close-btn { 
+            background: transparent; 
+            color: #000; 
+            font-size: 1.5rem; 
+            padding: 0; 
+            width: 32px; 
+            height: 32px; 
+        }
+    </style>
+</head>
+<body>
+    <!-- 모바일 안내 배너 -->
+    <div class="install-banner" id="installBanner">
+        <div>
+            <strong>📱 모바일에서 더 편리하게!</strong>
+            <p style="font-size: 0.9rem; margin: 0;">브라우저 메뉴에서 "홈 화면에 추가"를 선택하세요</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <button onclick="showInstallGuide()">방법 보기</button>
+            <button class="close-btn" onclick="closeInstallBanner()">×</button>
+        </div>
+    </div>
+    
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1>출고 현황 대시보드 <span style="font-size: 1rem; color: var(--text-secondary); font-weight: 400;">v1.6.1</span></h1>
+                    <p style="color: var(--text-secondary);"><span id="currentDate"></span> <span id="envBadge" style="display: none; margin-left: 0.5rem; padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600;"></span></p>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <div class="legend-card">
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 600;">📅 마감일 알림</div>
+                        <div style="display: flex; gap: 1rem;">
+                            <div class="legend-item"><span class="legend-dot warning"></span><span>D-3</span></div>
+                            <div class="legend-item"><span class="legend-dot urgent"></span><span>D-1/D-Day</span></div>
+                            <div class="legend-item"><span style="width: 8px; height: 8px; border-radius: 50%; background: #ffd700; display: inline-block;"></span><span>수정</span></div>
+                        </div>
+                    </div>
+                    <div class="stats-card"><div style="font-size: 0.875rem; color: var(--text-secondary);">총 컨테이너 수</div><div class="stats-value" id="totalContainers">0대/0대</div></div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="container">
+        <section class="upload-section">
+            <h3 style="margin-bottom: 1rem; color: var(--accent-blue);">📁 파일 관리</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Shipment_Master 시트가 포함된 엑셀 파일을 선택하세요</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                <label for="fileInput" class="upload-btn" style="margin: 0; cursor: pointer; text-align: center;">📂 원본 엑셀 업로드</label>
+                <button class="upload-btn" onclick="saveChanges()" style="background: var(--accent-green); display: none;" id="saveBtn">💾 수정사항 저장</button>
+                <label for="changesInput" class="upload-btn" style="margin: 0; cursor: pointer; text-align: center; background: #ffa500; display: none;" id="loadChangesBtn">📥 수정사항 불러오기</label>
+                <button class="upload-btn" onclick="exportToExcel()" style="background: var(--accent-cyan); color: #000; display: none;" id="exportBtn">📊 엑셀로 내보내기</button>
+                <button class="upload-btn" onclick="resetData()" style="background: var(--accent-red); display: none;" id="resetBtn">🔄 초기화</button>
+            </div>
+            
+            <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;">
+            <input type="file" id="changesInput" accept=".json" style="display: none;">
+            
+            <div id="statusBox" style="margin-top: 1rem; padding: 1rem; background: rgba(0, 212, 255, 0.1); border-radius: 8px; border-left: 3px solid var(--accent-blue); display: none;">
+                <p id="uploadStatus" style="color: var(--text-primary); font-size: 0.875rem; margin: 0;">파일을 선택하면 자동으로 분석됩니다</p>
+            </div>
+            
+            <div id="teamsGuide" style="margin-top: 1rem; padding: 1rem; background: rgba(0, 212, 255, 0.05); border-radius: 8px; border: 1px solid rgba(0, 212, 255, 0.2); display: none;">
+                <div style="color: var(--accent-cyan); font-weight: 600; margin-bottom: 0.5rem; font-size: 0.875rem;">☁️ Teams/SharePoint 모드로 실행 중</div>
+                <div style="color: var(--text-secondary); font-size: 0.75rem; line-height: 1.5;">
+                    <div>• 수정사항은 페이지를 닫으면 사라집니다</div>
+                    <div>• 작업 완료 시 반드시 <strong style="color: var(--accent-green);">"💾 수정사항 저장"</strong> 클릭</div>
+                    <div>• Teams 채널에 JSON 파일을 업로드하여 팀원과 공유</div>
+                    <div>• 다른 담당자는 <strong style="color: #ffa500;">"📥 수정사항 불러오기"</strong>로 최신 작업 적용</div>
+                </div>
+            </div>
+            
+            <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.75rem; text-align: center;">
+                💡 <strong>사용 방법:</strong> 원본 엑셀 업로드 → 대시보드에서 수정 → 수정사항 저장 → OneDrive/Teams 공유
+            </p>
+        </section>
+        
+        <div id="content" style="display: none;">
+            <section class="filters">
+                <div class="filter-grid">
+                    <div><label style="font-size:0.875rem;color:var(--text-secondary);display:block;margin-bottom:0.5rem;">년도</label><select id="filterYear"><option value="">전체</option></select></div>
+                    <div><label style="font-size:0.875rem;color:var(--text-secondary);display:block;margin-bottom:0.5rem;">월</label><select id="filterMonth"><option value="">전체</option></select></div>
+                    <div><label style="font-size:0.875rem;color:var(--text-secondary);display:block;margin-bottom:0.5rem;">선사</label><select id="filterCarrier"><option value="">전체</option></select></div>
+                    <div><label style="font-size:0.875rem;color:var(--text-secondary);display:block;margin-bottom:0.5rem;">업체</label><select id="filterVendor"><option value="">전체</option></select></div>
+                    <div><label style="font-size:0.875rem;color:var(--text-secondary);display:block;margin-bottom:0.5rem;">작업지</label><select id="filterLocation"><option value="">전체</option></select></div>
+                    <div><label style="font-size:0.875rem;color:var(--text-secondary);display:block;margin-bottom:0.5rem;">유형</label><select id="filterType"><option value="">전체</option></select></div>
+                    <div><label style="font-size:0.875rem;color:var(--text-secondary);display:block;margin-bottom:0.5rem;">출고상태</label><select id="filterStatus"><option value="">전체</option><option>준비중</option><option>출고완료</option><option>취소</option></select></div>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <span id="filterCount" style="color: var(--text-secondary); padding: 0.75rem;">조회: <strong style="color: var(--accent-blue);">0</strong>건</span>
+                    <button class="btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);" onclick="resetFilters()">필터 초기화</button>
+                </div>
+            </section>
+            <div class="charts-grid">
+                <div class="chart-card"><h3 style="margin-bottom: 1.5rem;">선사별 점유율</h3><div class="chart-container"><canvas id="carrierChart"></canvas></div></div>
+                <div class="chart-card"><h3 style="margin-bottom: 1.5rem;">업체별 점유율</h3><div class="chart-container"><canvas id="vendorChart"></canvas></div></div>
+                <div class="chart-card"><h3 style="margin-bottom: 1.5rem;">작업지별 컨테이너 수</h3><div class="chart-container"><canvas id="locationChart"></canvas></div></div>
+            </div>
+            <section class="table-section">
+                <h3 style="margin-bottom: 1.5rem;">전체 출고 현황</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="min-width: 90px;">상태</th>
+                            <th style="min-width: 120px;">ID</th>
+                            <th style="min-width: 160px;">작업일</th>
+                            <th style="min-width: 70px;">유형</th>
+                            <th style="min-width: 140px;">업체명</th>
+                            <th style="min-width: 110px;">작업지</th>
+                            <th style="min-width: 110px;">선사</th>
+                            <th style="min-width: 120px;">모선명</th>
+                            <th style="min-width: 450px;">품목정보</th>
+                            <th style="min-width: 200px;">서류마감</th>
+                            <th style="min-width: 200px;">카고마감</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </section>
+            <section class="simulator-section">
+                <h3>🚢 컨테이너 적재 시뮬레이터 (40'HC 기준, 2단 적재)</h3>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">각 품목의 실제 화물 사이즈를 기반으로 정밀 계산합니다. 품목을 추가/제외하면서 최적 적재량을 확인하세요.</p>
+                <div class="simulator-inputs">
+                    <div><label style="font-size:0.875rem;color:var(--text-secondary);display:block;margin-bottom:0.5rem;">품목 선택</label><select id="simProduct"><option value="">선택하세요</option></select></div>
+                    <div><label style="font-size:0.875rem;color:var(--text-secondary);display:block;margin-bottom:0.5rem;">수량 (PLT)</label><input type="number" id="simQuantity" placeholder="수량 입력" min="1"></div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn" style="background: var(--accent-green); color: #000; flex: 1;" onclick="addProduct()">+ 품목 추가</button>
+                    <button class="btn" style="background: var(--accent-red); color: #fff;" onclick="clearProducts()">전체 삭제</button>
+                </div>
+                <div class="added-items" id="addedItems" style="display: none;"><h4 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.75rem;">추가된 품목 목록</h4><div id="itemsList"></div></div>
+                <button class="btn" style="background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)); color: #000; width: 100%; margin-top: 1rem;" onclick="calculateContainer()">🔄 적재 계산 재실행</button>
+                <p style="text-align: center; color: var(--text-secondary); font-size: 0.75rem; margin-top: 0.5rem;">💡 품목 추가/제거 시 자동으로 계산됩니다</p>
+                <div class="simulator-result" id="simResult">
+                    <div class="result-item"><span style="color: var(--text-secondary);">필요 컨테이너 수</span><span style="color: var(--accent-green); font-weight: 600;" id="resultContainers">-</span></div>
+                    <div class="result-item"><span style="color: var(--text-secondary);">컨테이너당 최대 적재량</span><span style="color: var(--accent-green); font-weight: 600;" id="resultPallets">-</span></div>
+                    <div class="result-item"><span style="color: var(--text-secondary);">공간 활용률</span><span style="color: var(--accent-green); font-weight: 600;" id="resultEfficiency">-</span></div>
+                </div>
+            </section>
+        </div>
+    </div>
+    <script>
+let DATA = { shipments: [], cargo_sizes: [] };
+let filteredData = [];
+let addedProducts = [];
+let statusChanges = {};
+let dateChanges = {};
+let itemChanges = {};
+let basicFieldChanges = {};
+let addedItems = {};      // 추가된 품목 추적
+let deletedItems = {};    // 삭제된 품목 추적
+let carrierChart, vendorChart, locationChart;
+let totalContainerCount = 0;
+
+// 스토리지 타입 감지 (SharePoint/Teams 호환)
+let storageType = 'localStorage';
+let storage = null;
+
+try {
+    // localStorage 테스트
+    localStorage.setItem('_test', '1');
+    localStorage.removeItem('_test');
+    storage = localStorage;
+    storageType = 'localStorage';
+    console.log('✅ localStorage 사용 가능');
+} catch(e) {
+    // localStorage 실패 시 sessionStorage 사용
+    try {
+        sessionStorage.setItem('_test', '1');
+        sessionStorage.removeItem('_test');
+        storage = sessionStorage;
+        storageType = 'sessionStorage';
+        console.log('⚠️ sessionStorage 사용 (페이지 새로고침 시 데이터 유지 안 됨)');
+        console.log('💡 SharePoint/Teams 환경: 수정사항을 반드시 JSON 파일로 저장하세요!');
+    } catch(e2) {
+        storage = {
+            getItem: () => null,
+            setItem: () => {},
+            removeItem: () => {},
+            clear: () => {}
+        };
+        storageType = 'none';
+        console.log('❌ 스토리지 사용 불가 - 메모리만 사용');
+    }
+}
+
+// 초기 데이터 로드
+try {
+    statusChanges = JSON.parse(storage.getItem('statusChanges') || '{}');
+    dateChanges = JSON.parse(storage.getItem('dateChanges') || '{}');
+    itemChanges = JSON.parse(storage.getItem('itemChanges') || '{}');
+    basicFieldChanges = JSON.parse(storage.getItem('basicFieldChanges') || '{}');
+    addedItems = JSON.parse(storage.getItem('addedItems') || '{}');
+    deletedItems = JSON.parse(storage.getItem('deletedItems') || '{}');
+} catch(e) {
+    console.log('초기 데이터 로드 실패:', e);
+}
+
+// 한국 시간 기준 현재 년월 설정
+function updateCurrentDate() {
+    const now = new Date();
+    const kstOffset = 9 * 60; // 9시간을 분으로
+    const kstTime = new Date(now.getTime() + (kstOffset * 60 * 1000));
+    
+    const year = kstTime.getFullYear();
+    const month = kstTime.getMonth() + 1; // 0부터 시작하므로 +1
+    
+    const dateElement = document.getElementById('currentDate');
+    if (dateElement) {
+        dateElement.textContent = `${year}년 ${month}월`;
+    }
+}
+
+// 페이지 로드 시 날짜 설정
+updateCurrentDate();
+
+// 날짜 포맷 변환 함수
+function formatDateFromExcel(dateValue) {
+    if (!dateValue) return '';
+    
+    // 이미 YYYY-MM-DD 형식인 경우
+    if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+        return dateValue;
+    }
+    
+    // Date 객체로 변환 시도
+    let date;
+    if (typeof dateValue === 'number') {
+        // 엑셀 시리얼 날짜인 경우
+        date = new Date((dateValue - 25569) * 86400 * 1000);
+    } else {
+        date = new Date(dateValue);
+    }
+    
+    // 유효한 날짜인지 확인
+    if (isNaN(date.getTime())) return '';
+    
+    // YYYY-MM-DD 형식으로 변환
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+}
+
+document.getElementById('fileInput').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const statusEl = document.getElementById('uploadStatus');
+    const statusBox = document.getElementById('statusBox');
+    statusBox.style.display = 'block';
+    statusBox.style.borderLeftColor = 'var(--accent-blue)';
+    statusEl.textContent = '⏳ 파일 읽는 중...';
+    statusEl.style.color = '#00d4ff';
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            statusEl.textContent = '⏳ 데이터 처리 중...';
+            
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            if (!workbook.Sheets['Shipment_Master']) {
+                throw new Error('Shipment_Master 시트를 찾을 수 없습니다.');
+            }
+            
+            const shipmentSheet = workbook.Sheets['Shipment_Master'];
+            const shipments = XLSX.utils.sheet_to_json(shipmentSheet, { range: 1, defval: '' });
+            
+            let cargoSizes = [];
+            if (workbook.Sheets['화물 사이즈']) {
+                const sizeSheet = workbook.Sheets['화물 사이즈'];
+                cargoSizes = XLSX.utils.sheet_to_json(sizeSheet, { range: 1, defval: '' });
+            }
+            
+            DATA.shipments = shipments.filter(s => s.Shipment_ID).map(s => ({
+                Shipment_ID: String(s.Shipment_ID || ''),
+                출고월: String(s.출고월 || ''),
+                작업일: formatDateFromExcel(s.작업일),
+                추가작업일: '',  // 수기 입력용 추가 날짜
+                유형: String(s.유형 || ''),
+                업체명: String(s.업체명 || ''),
+                작업지: String(s.작업지 || ''),
+                선사: String(s.선사 || ''),
+                모선명: String(s.모선명 || ''),
+                품목코드: String(s.품목코드 || ''),
+                품목명: String(s.품목명 || ''),
+                수량: parseFloat(s.수량) || 0,
+                단위: String(s.단위 || 'PLT'),
+                서류마감: formatDateFromExcel(s.서류마감),
+                카고마감: formatDateFromExcel(s.카고마감),
+                출고상태: statusChanges[s.Shipment_ID] || '준비중'
+            }));
+            
+            DATA.cargo_sizes = cargoSizes.filter(c => c.품목코드).map(c => ({
+                품목코드: String(c.품목코드 || ''),
+                품목명: String(c.품목명 || ''),
+                '화물 사이즈 (1PLT 기준)': String(c['화물 사이즈 (1PLT 기준)'] || '1100*1100*1100')
+            }));
+            
+            // 품목 변경사항 적용을 위한 매핑
+            const shipmentGroups = {};
+            DATA.shipments.forEach(s => {
+                if (!shipmentGroups[s.Shipment_ID]) shipmentGroups[s.Shipment_ID] = [];
+                shipmentGroups[s.Shipment_ID].push(s);
+            });
+            
+            DATA.shipments.forEach(s => {
+                // 작업일 변경사항 적용
+                if (dateChanges[s.Shipment_ID]) {
+                    if (typeof dateChanges[s.Shipment_ID] === 'string') {
+                        s.작업일 = dateChanges[s.Shipment_ID];
+                    } else {
+                        if (dateChanges[s.Shipment_ID].작업일) s.작업일 = dateChanges[s.Shipment_ID].작업일;
+                        if (dateChanges[s.Shipment_ID].추가작업일) s.추가작업일 = dateChanges[s.Shipment_ID].추가작업일;
+                        if (dateChanges[s.Shipment_ID].서류마감) s.서류마감 = dateChanges[s.Shipment_ID].서류마감;
+                        if (dateChanges[s.Shipment_ID].카고마감) s.카고마감 = dateChanges[s.Shipment_ID].카고마감;
+                    }
+                }
+                
+                // 기본 필드 변경사항 적용 (업체명, 작업지, 선사, 유형, 모선명)
+                if (basicFieldChanges[s.Shipment_ID]) {
+                    const changes = basicFieldChanges[s.Shipment_ID];
+                    if (changes.업체명) s.업체명 = changes.업체명;
+                    if (changes.작업지) s.작업지 = changes.작업지;
+                    if (changes.선사) s.선사 = changes.선사;
+                    if (changes.유형) s.유형 = changes.유형;
+                    if (changes.모선명) s.모선명 = changes.모선명;
+                }
+                
+                // 품목 변경사항 적용
+                const items = shipmentGroups[s.Shipment_ID];
+                const itemIndex = items.indexOf(s);
+                const itemKey = s.Shipment_ID + '_' + s.품목코드 + '_' + itemIndex;
+                
+                if (itemChanges[itemKey]) {
+                    const changes = itemChanges[itemKey];
+                    if (changes.품목코드) s.품목코드 = changes.품목코드;
+                    if (changes.품목명) s.품목명 = changes.품목명;
+                    if (changes.수량 !== undefined) s.수량 = changes.수량;
+                    if (changes.단위) s.단위 = changes.단위;
+                }
+            });
+            
+            // ===== 추가/삭제 적용 =====
+            // 1. 삭제된 품목 제거
+            Object.keys(deletedItems).forEach(shipmentId => {
+                const itemsToDelete = deletedItems[shipmentId];
+                itemsToDelete.forEach(deletedItem => {
+                    const indexToRemove = DATA.shipments.findIndex(s => 
+                        s.Shipment_ID === shipmentId && 
+                        s.품목코드 === deletedItem.품목코드 &&
+                        s.품목명 === deletedItem.품목명
+                    );
+                    if (indexToRemove !== -1) {
+                        DATA.shipments.splice(indexToRemove, 1);
+                    }
+                });
+            });
+            
+            // 2. 추가된 품목 추가
+            Object.keys(addedItems).forEach(shipmentId => {
+                const itemsToAdd = addedItems[shipmentId];
+                itemsToAdd.forEach(newItem => {
+                    const alreadyExists = DATA.shipments.some(s => s._addedId === newItem._addedId);
+                    if (!alreadyExists) {
+                        DATA.shipments.push(newItem);
+                    }
+                });
+            });
+            
+            // 총 컨테이너 수 계산
+            const uniqueIds = [...new Set(DATA.shipments.map(s => s.Shipment_ID))];
+            const maxId = Math.max(...uniqueIds.map(id => {
+                const match = id.match(/\d+$/);
+                return match ? parseInt(match[0]) : 0;
+            }));
+            totalContainerCount = maxId;
+            
+            statusEl.textContent = '✅ ' + file.name + ' (' + DATA.shipments.length + '건 로드 완료)';
+            statusEl.style.color = '#00ff88';
+            statusBox.style.borderLeftColor = 'var(--accent-green)';
+            statusBox.style.background = 'rgba(0, 255, 136, 0.1)';
+            
+            document.getElementById('content').style.display = 'block';
+            
+            // 관리 버튼들 표시
+            document.getElementById('saveBtn').style.display = 'block';
+            document.getElementById('loadChangesBtn').style.display = 'block';
+            document.getElementById('exportBtn').style.display = 'block';
+            document.getElementById('resetBtn').style.display = 'block';
+            
+            filteredData = [...DATA.shipments];
+            populateFilters();
+            renderCharts();
+            renderTable();
+            populateSimulatorProducts();
+            updateTotalContainers();
+        } catch (error) {
+            console.error('오류:', error);
+            statusEl.textContent = '❌ 오류: ' + error.message;
+            statusEl.style.color = '#ff3366';
+            statusBox.style.borderLeftColor = 'var(--accent-red)';
+            statusBox.style.background = 'rgba(255, 51, 102, 0.1)';
+            alert('파일 처리 중 오류가 발생했습니다.\n\n' + error.message);
+        }
+    };
+    
+    reader.onerror = function() {
+        statusEl.textContent = '❌ 파일 읽기 실패';
+        statusEl.style.color = '#ff3366';
+        statusBox.style.borderLeftColor = 'var(--accent-red)';
+        statusBox.style.background = 'rgba(255, 51, 102, 0.1)';
+    };
+    
+    reader.readAsArrayBuffer(file);
+});
+
+// SharePoint/Teams 환경 감지 및 안내
+window.addEventListener('load', function() {
+    // 환경 감지
+    const isSharePoint = window.location.hostname.includes('sharepoint.com') || 
+                        window.location.hostname.includes('officeapps.live.com');
+    const isTeams = window.name === 'embedded-page-container' || 
+                   window.location.href.includes('teams.microsoft.com');
+    
+    // 환경 배지 표시
+    const envBadge = document.getElementById('envBadge');
+    if (envBadge) {
+        if (storageType === 'localStorage') {
+            envBadge.textContent = '💾 로컬 모드';
+            envBadge.style.background = 'rgba(0, 255, 136, 0.2)';
+            envBadge.style.color = 'var(--accent-green)';
+            envBadge.style.display = 'inline-block';
+        } else if (storageType === 'sessionStorage') {
+            envBadge.textContent = '☁️ Teams/SharePoint 모드';
+            envBadge.style.background = 'rgba(0, 212, 255, 0.2)';
+            envBadge.style.color = 'var(--accent-cyan)';
+            envBadge.style.display = 'inline-block';
+        }
+    }
+    
+    // Teams 가이드 표시
+    const teamsGuide = document.getElementById('teamsGuide');
+    if (teamsGuide && storageType === 'sessionStorage') {
+        teamsGuide.style.display = 'block';
+    }
+    
+    if (storageType === 'sessionStorage' || isSharePoint || isTeams) {
+        setTimeout(() => {
+            const message = `
+📌 SharePoint/Teams 환경 감지
+
+현재 ${storageType}를 사용 중입니다.
+⚠️ 페이지를 닫으면 수정사항이 사라집니다!
+
+💾 작업 방법:
+1. 엑셀 업로드 → 작업
+2. 💾 "수정사항 저장" 클릭 (JSON 다운로드)
+3. Teams 채널에 JSON 파일 업로드
+4. 다른 담당자도 동일한 방법 사용
+
+✅ 권장 사항:
+- 작업 완료 시 반드시 수정사항 저장
+- Teams 채널의 최신 JSON 파일 사용
+- 중요 작업 전 백업
+
+💡 팁: 로컬에서 사용하려면 HTML 파일을 다운로드하세요!
+            `.trim();
+            
+            if (confirm(message + '\n\n이 안내를 확인했습니까?')) {
+                console.log('사용자 환경 안내 완료');
+            }
+        }, 1000);
+    }
+});
+
+function updateTotalContainers() {
+    // 출고완료 컨테이너 수 계산
+    const completedIds = new Set();
+    DATA.shipments.forEach(s => {
+        if (s.출고상태 === '출고완료') {
+            completedIds.add(s.Shipment_ID);
+        }
+    });
+    
+    const completedCount = completedIds.size;
+    document.getElementById('totalContainers').textContent = completedCount + '대/' + totalContainerCount + '대';
+}
+
+function populateFilters() {
+    const years = new Set();
+    DATA.shipments.forEach(s => { 
+        if (s.작업일 && s.작업일.length >= 4) {
+            const year = s.작업일.substring(0, 4);
+            if (year && !isNaN(year)) years.add(year);
+        }
+    });
+    const yearSelect = document.getElementById('filterYear');
+    yearSelect.innerHTML = '<option value="">전체</option>';
+    Array.from(years).sort().reverse().forEach(y => yearSelect.add(new Option(y, y)));
+    
+    const months = new Set();
+    DATA.shipments.forEach(s => { if (s.출고월) months.add(s.출고월); });
+    const monthSelect = document.getElementById('filterMonth');
+    monthSelect.innerHTML = '<option value="">전체</option>';
+    Array.from(months).sort().forEach(m => monthSelect.add(new Option(m, m)));
+    
+    const carriers = new Set();
+    DATA.shipments.forEach(s => { if (s.선사) carriers.add(s.선사); });
+    const carrierSelect = document.getElementById('filterCarrier');
+    carrierSelect.innerHTML = '<option value="">전체</option>';
+    Array.from(carriers).sort().forEach(c => carrierSelect.add(new Option(c, c)));
+    
+    const vendors = new Set();
+    DATA.shipments.forEach(s => { if (s.업체명) vendors.add(s.업체명); });
+    const vendorSelect = document.getElementById('filterVendor');
+    vendorSelect.innerHTML = '<option value="">전체</option>';
+    Array.from(vendors).sort().forEach(v => vendorSelect.add(new Option(v, v)));
+    
+    const locations = new Set();
+    DATA.shipments.forEach(s => { if (s.작업지) locations.add(s.작업지); });
+    const locationSelect = document.getElementById('filterLocation');
+    locationSelect.innerHTML = '<option value="">전체</option>';
+    Array.from(locations).sort().forEach(l => locationSelect.add(new Option(l, l)));
+    
+    const types = new Set();
+    DATA.shipments.forEach(s => { if (s.유형) types.add(s.유형); });
+    const typeSelect = document.getElementById('filterType');
+    typeSelect.innerHTML = '<option value="">전체</option>';
+    Array.from(types).sort().forEach(t => typeSelect.add(new Option(t, t)));
+    
+    ['filterYear', 'filterMonth', 'filterCarrier', 'filterVendor', 'filterLocation', 'filterType', 'filterStatus'].forEach(id => {
+        document.getElementById(id).addEventListener('change', applyFilters);
+    });
+    
+    updateFilterCount();
+}
+
+function applyFilters() {
+    const year = document.getElementById('filterYear').value;
+    const month = document.getElementById('filterMonth').value;
+    const carrier = document.getElementById('filterCarrier').value;
+    const vendor = document.getElementById('filterVendor').value;
+    const location = document.getElementById('filterLocation').value;
+    const type = document.getElementById('filterType').value;
+    const status = document.getElementById('filterStatus').value;
+    
+    filteredData = DATA.shipments.filter(s => {
+        return (!year || (s.작업일 && s.작업일.startsWith(year))) &&
+               (!month || s.출고월 === month) &&
+               (!carrier || s.선사 === carrier) &&
+               (!vendor || s.업체명 === vendor) &&
+               (!location || s.작업지 === location) &&
+               (!type || s.유형 === type) &&
+               (!status || s.출고상태 === status);
+    });
+    
+    updateFilterCount();
+    renderCharts();
+    renderTable();
+}
+
+function updateFilterCount() {
+    const uniqueIds = new Set(filteredData.map(s => s.Shipment_ID));
+    document.getElementById('filterCount').innerHTML = '조회: <strong style="color: var(--accent-blue);">' + uniqueIds.size + '</strong>건';
+}
+
+function resetFilters() {
+    ['filterYear', 'filterMonth', 'filterCarrier', 'filterVendor', 'filterLocation', 'filterType', 'filterStatus'].forEach(id => {
+        document.getElementById(id).value = '';
+    });
+    applyFilters();
+}
+
+function renderCharts() {
+    if (carrierChart) carrierChart.destroy();
+    if (vendorChart) vendorChart.destroy();
+    if (locationChart) locationChart.destroy();
+    
+    const carrierData = {};
+    filteredData.forEach(s => carrierData[s.선사] = (carrierData[s.선사] || 0) + 1);
+    const carrierTotal = Object.values(carrierData).reduce((a, b) => a + b, 0);
+    
+    carrierChart = new Chart(document.getElementById('carrierChart'), {
+        type: 'doughnut',
+        data: { labels: Object.keys(carrierData), datasets: [{ data: Object.values(carrierData), backgroundColor: ['#00d4ff', '#ff6b35', '#00ff88', '#ffa500', '#ff3366', '#9d4edd'] }] },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            onClick: (e, items) => { if (items.length) { const i = items[0].index; alert(carrierChart.data.labels[i] + '\n건수: ' + carrierChart.data.datasets[0].data[i] + '건\n점유율: ' + ((carrierChart.data.datasets[0].data[i] / carrierTotal) * 100).toFixed(1) + '%'); } },
+            plugins: { legend: { position: 'bottom', labels: { color: '#ffffff', padding: 15 } }, datalabels: { color: '#fff', font: { weight: 'bold', size: 14 }, formatter: (v) => ((v / carrierTotal) * 100).toFixed(1) + '%' } }
+        },
+        plugins: [ChartDataLabels]
+    });
+    
+    const vendorData = {};
+    filteredData.forEach(s => vendorData[s.업체명] = (vendorData[s.업체명] || 0) + (parseFloat(s.수량) || 0));
+    const vendorTotal = Object.values(vendorData).reduce((a, b) => a + b, 0);
+    
+    vendorChart = new Chart(document.getElementById('vendorChart'), {
+        type: 'pie',
+        data: { labels: Object.keys(vendorData), datasets: [{ data: Object.values(vendorData), backgroundColor: ['#00d4ff', '#00ff88', '#ff6b35', '#ffa500', '#ff3366', '#9d4edd'] }] },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            onClick: (e, items) => { if (items.length) { const i = items[0].index; alert(vendorChart.data.labels[i] + '\n수량: ' + vendorChart.data.datasets[0].data[i] + 'PLT\n점유율: ' + ((vendorChart.data.datasets[0].data[i] / vendorTotal) * 100).toFixed(1) + '%'); } },
+            plugins: { legend: { position: 'bottom', labels: { color: '#ffffff', padding: 15 } }, datalabels: { color: '#fff', font: { weight: 'bold', size: 14 }, formatter: (v) => ((v / vendorTotal) * 100).toFixed(1) + '%' } }
+        },
+        plugins: [ChartDataLabels]
+    });
+    
+    const locationData = {};
+    filteredData.forEach(s => { if (!locationData[s.작업지]) locationData[s.작업지] = new Set(); locationData[s.작업지].add(s.Shipment_ID); });
+    const locationCounts = {};
+    Object.keys(locationData).forEach(loc => locationCounts[loc] = locationData[loc].size);
+    
+    locationChart = new Chart(document.getElementById('locationChart'), {
+        type: 'bar',
+        data: { labels: Object.keys(locationCounts), datasets: [{ label: '컨테이너 수', data: Object.values(locationCounts), backgroundColor: '#00d4ff' }] },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { 
+                y: { 
+                    beginAtZero: true, 
+                    max: 30,
+                    ticks: { color: '#a0aec0', stepSize: 5 } 
+                }, 
+                x: { ticks: { color: '#a0aec0' } } 
+            },
+            plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', color: '#00d4ff', font: { weight: 'bold', size: 12 }, formatter: (v) => v + '대' } }
+        },
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    
+    const grouped = {};
+    filteredData.forEach(s => { if (!grouped[s.Shipment_ID]) grouped[s.Shipment_ID] = []; grouped[s.Shipment_ID].push(s); });
+    
+    Object.keys(grouped).forEach(shipmentId => {
+        const items = grouped[shipmentId];
+        const firstItem = items[0];
+        const tr = document.createElement('tr');
+        const isCompleted = firstItem.출고상태 === '출고완료';
+        const isCancelled = firstItem.출고상태 === '취소';
+        
+        // 수정사항 체크
+        const hasStatusChange = statusChanges.hasOwnProperty(shipmentId);
+        const hasDateChange = dateChanges.hasOwnProperty(shipmentId);
+        const hasItemChange = itemChanges.hasOwnProperty(shipmentId);
+        const hasBasicChange = basicFieldChanges.hasOwnProperty(shipmentId);
+        const isModified = hasStatusChange || hasDateChange || hasItemChange || hasBasicChange;
+        
+        if (isCompleted) tr.classList.add('completed');
+        if (isCancelled) tr.classList.add('cancelled');
+        if (isModified) tr.classList.add('modified');
+        
+        const disabled = isCompleted ? 'disabled' : '';
+        const disabledStyle = isCompleted ? 'opacity: 0.6; cursor: not-allowed;' : '';
+        
+        const itemsHtml = items.map((item, idx) => {
+            const itemKey = `${shipmentId}_${idx}`;
+            const itemModified = itemChanges[itemKey];
+            const modifiedClass = itemModified ? 'modified-cell' : '';
+            
+            return `<div class="item-detail ${modifiedClass}">
+                <input type="text" value="${item.품목코드}" onchange="changeItemField('${shipmentId}', ${idx}, '품목코드', this.value)" placeholder="품목코드" ${disabled} style="${disabledStyle}">
+                <input type="text" value="${item.품목명}" onchange="changeItemField('${shipmentId}', ${idx}, '품목명', this.value)" placeholder="품목명" ${disabled} style="${disabledStyle}">
+                <input type="number" value="${item.수량}" onchange="changeItemField('${shipmentId}', ${idx}, '수량', this.value)" placeholder="수량" ${disabled} style="${disabledStyle}">
+                <input type="text" value="${item.단위}" onchange="changeItemField('${shipmentId}', ${idx}, '단위', this.value)" placeholder="단위" ${disabled} style="${disabledStyle}">
+                ${items.length > 1 ? `<button onclick="deleteItem('${shipmentId}', ${idx})" ${disabled} style="background: var(--accent-red); color: white; border: none; border-radius: 4px; padding: 0.3rem 0.5rem; cursor: pointer; font-size: 0.75rem; ${disabledStyle}">−</button>` : '<span style="width: 30px;"></span>'}
+            </div>`;
+        }).join('');
+        
+        // + 버튼 추가
+        const addButtonHtml = isCompleted ? '' : `<div style="margin-top: 0.5rem;"><button onclick="addItem('${shipmentId}')" style="background: var(--accent-blue); color: #000; border: none; border-radius: 4px; padding: 0.4rem 0.8rem; cursor: pointer; font-size: 0.75rem; font-weight: 700;">+ 품목 추가</button></div>`;
+        
+        const statusModifiedClass = hasStatusChange ? 'modified-cell' : '';
+        const dateModifiedClass = hasDateChange ? 'modified-cell' : '';
+        const typeModifiedClass = (hasBasicChange && basicFieldChanges[shipmentId].유형) ? 'modified-cell' : '';
+        const vendorModifiedClass = (hasBasicChange && basicFieldChanges[shipmentId].업체명) ? 'modified-cell' : '';
+        const locationModifiedClass = (hasBasicChange && basicFieldChanges[shipmentId].작업지) ? 'modified-cell' : '';
+        const carrierModifiedClass = (hasBasicChange && basicFieldChanges[shipmentId].선사) ? 'modified-cell' : '';
+        const vesselModifiedClass = (hasBasicChange && basicFieldChanges[shipmentId].모선명) ? 'modified-cell' : '';
+        const deadlineModifiedClass = (hasDateChange && dateChanges[shipmentId] && (dateChanges[shipmentId].서류마감 || dateChanges[shipmentId].카고마감)) ? 'modified-cell' : '';
+        
+        const additionalDateModifiedClass = (hasDateChange && dateChanges[shipmentId] && dateChanges[shipmentId].추가작업일) ? 'modified-cell' : '';
+        
+        // 업체명이 '삼진'일 때만 2줄, 나머지는 1줄
+        const is삼진 = firstItem.업체명 && firstItem.업체명.includes('삼진');
+        let workDateHtml = '';
+        
+        if (is삼진) {
+            // 삼진: 위(추가날짜) + 아래(엑셀날짜)
+            workDateHtml = '<td class="' + dateModifiedClass + '" style="padding: 0.3rem;">' +
+                '<div class="' + additionalDateModifiedClass + '" style="margin-bottom: 0.2rem;"><input type="date" class="date-input" value="' + (firstItem.추가작업일 || '') + '" onchange="changeAdditionalDate(\'' + shipmentId + '\', this.value)" placeholder="추가날짜" ' + disabled + ' style="width: 100%; font-size: 0.8rem; ' + disabledStyle + '"></div>' +
+                '<div><input type="date" class="date-input" value="' + (firstItem.작업일 || '') + '" onchange="changeDate(\'' + shipmentId + '\', this.value)" placeholder="엑셀날짜" ' + disabled + ' style="width: 100%; font-size: 0.8rem; ' + disabledStyle + '"></div>' +
+            '</td>';
+        } else {
+            // 나머지: 엑셀날짜 1줄만
+            workDateHtml = '<td class="' + dateModifiedClass + '"><input type="date" class="date-input" value="' + (firstItem.작업일 || '') + '" onchange="changeDate(\'' + shipmentId + '\', this.value)" placeholder="작업일" ' + disabled + ' style="' + disabledStyle + '"></td>';
+        }
+        
+        tr.innerHTML = '<td class="' + statusModifiedClass + '"><span class="status-badge status-' + firstItem.출고상태 + '" onclick="changeStatus(\'' + shipmentId + '\')">' + firstItem.출고상태 + '</span></td>' +
+            '<td>' + shipmentId + '</td>' +
+            workDateHtml +
+            '<td class="' + typeModifiedClass + '"><input type="text" value="' + (firstItem.유형 || '') + '" onchange="changeBasicField(\'' + shipmentId + '\', \'유형\', this.value)" placeholder="유형" ' + disabled + ' style="background: rgba(26, 31, 58, 0.5); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.4rem; border-radius: 4px; width: 100%; min-width: 85px; text-align: center; ' + disabledStyle + '"></td>' +
+            '<td class="' + vendorModifiedClass + '"><input type="text" value="' + (firstItem.업체명 || '') + '" onchange="changeBasicField(\'' + shipmentId + '\', \'업체명\', this.value)" placeholder="업체명" ' + disabled + ' style="background: rgba(26, 31, 58, 0.5); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.4rem; border-radius: 4px; width: 100%; min-width: 75px; ' + disabledStyle + '"></td>' +
+            '<td class="' + locationModifiedClass + '"><input type="text" value="' + (firstItem.작업지 || '') + '" onchange="changeBasicField(\'' + shipmentId + '\', \'작업지\', this.value)" placeholder="작업지" ' + disabled + ' style="background: rgba(26, 31, 58, 0.5); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.4rem; border-radius: 4px; width: 100%; min-width: 70px; ' + disabledStyle + '"></td>' +
+            '<td class="' + carrierModifiedClass + '"><input type="text" value="' + (firstItem.선사 || '') + '" onchange="changeBasicField(\'' + shipmentId + '\', \'선사\', this.value)" placeholder="선사" ' + disabled + ' style="background: rgba(26, 31, 58, 0.5); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.4rem; border-radius: 4px; width: 100%; min-width: 70px; ' + disabledStyle + '"></td>' +
+            '<td class="' + vesselModifiedClass + '"><input type="text" value="' + (firstItem.모선명 || '') + '" onchange="changeBasicField(\'' + shipmentId + '\', \'모선명\', this.value)" placeholder="모선명" ' + disabled + ' style="background: rgba(26, 31, 58, 0.5); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.4rem; border-radius: 4px; width: 100%; min-width: 105px; ' + disabledStyle + '"></td>' +
+            '<td>' + itemsHtml + addButtonHtml + '</td>' +
+            '<td class="deadline-cell ' + deadlineModifiedClass + '"><input type="date" class="date-input" value="' + (firstItem.서류마감 || '') + '" onchange="changeDeadline(\'' + shipmentId + '\', \'서류마감\', this.value)" placeholder="서류마감" ' + disabled + ' style="' + disabledStyle + '">' + getDeadlineBadge(firstItem.서류마감) + '</td>' +
+            '<td class="deadline-cell ' + deadlineModifiedClass + '"><input type="date" class="date-input" value="' + (firstItem.카고마감 || '') + '" onchange="changeDeadline(\'' + shipmentId + '\', \'카고마감\', this.value)" placeholder="카고마감" ' + disabled + ' style="' + disabledStyle + '">' + getDeadlineBadge(firstItem.카고마감) + '</td>';
+        
+        tbody.appendChild(tr);
+    });
+}
+
+function changeStatus(shipmentId) {
+    const currentStatus = DATA.shipments.find(s => s.Shipment_ID === shipmentId).출고상태;
+    
+    // 3-state 순환: 준비중 → 출고완료 → 취소 → 준비중
+    let newStatus;
+    if (currentStatus === '준비중') {
+        newStatus = '출고완료';
+    } else if (currentStatus === '출고완료') {
+        newStatus = '취소';
+    } else {
+        newStatus = '준비중';
+    }
+    
+    DATA.shipments.forEach(s => { if (s.Shipment_ID === shipmentId) s.출고상태 = newStatus; });
+    statusChanges[shipmentId] = newStatus;
+    storage.setItem('statusChanges', JSON.stringify(statusChanges));
+    
+    // 총 컨테이너 수 업데이트
+    updateTotalContainers();
+    applyFilters();
+}
+
+function changeDate(shipmentId, newDate) {
+    DATA.shipments.forEach(s => { if (s.Shipment_ID === shipmentId) s.작업일 = newDate; });
+    
+    if (!dateChanges[shipmentId]) dateChanges[shipmentId] = {};
+    if (typeof dateChanges[shipmentId] === 'string') {
+        const oldDate = dateChanges[shipmentId];
+        dateChanges[shipmentId] = { 작업일: oldDate };
+    }
+    dateChanges[shipmentId].작업일 = newDate;
+    storage.setItem('dateChanges', JSON.stringify(dateChanges));
+}
+
+function changeAdditionalDate(shipmentId, newDate) {
+    DATA.shipments.forEach(s => { if (s.Shipment_ID === shipmentId) s.추가작업일 = newDate; });
+    
+    if (!dateChanges[shipmentId]) dateChanges[shipmentId] = {};
+    if (typeof dateChanges[shipmentId] === 'string') {
+        const oldDate = dateChanges[shipmentId];
+        dateChanges[shipmentId] = { 작업일: oldDate };
+    }
+    dateChanges[shipmentId].추가작업일 = newDate;
+    storage.setItem('dateChanges', JSON.stringify(dateChanges));
+    
+    renderTable();
+}
+
+function changeDeadline(shipmentId, fieldName, newDate) {
+    DATA.shipments.forEach(s => { 
+        if (s.Shipment_ID === shipmentId) {
+            s[fieldName] = newDate;
+        }
+    });
+    
+    if (!dateChanges[shipmentId]) dateChanges[shipmentId] = {};
+    if (typeof dateChanges[shipmentId] === 'string') {
+        // 기존 작업일만 저장되어 있는 경우
+        const oldDate = dateChanges[shipmentId];
+        dateChanges[shipmentId] = { 작업일: oldDate };
+    }
+    dateChanges[shipmentId][fieldName] = newDate;
+    storage.setItem('dateChanges', JSON.stringify(dateChanges));
+    
+    // 테이블 다시 렌더링
+    renderTable();
+}
+
+function changeItemField(shipmentId, itemIndex, fieldName, newValue) {
+    // 해당 Shipment의 품목들 찾기
+    const shipmentItems = DATA.shipments.filter(s => s.Shipment_ID === shipmentId);
+    
+    if (shipmentItems[itemIndex]) {
+        const item = shipmentItems[itemIndex];
+        const originalCode = item.품목코드; // 원래 품목코드 저장
+        const storageKey = shipmentId + '_' + originalCode + '_' + itemIndex;
+        
+        // 값 업데이트
+        if (fieldName === '수량') {
+            item[fieldName] = parseFloat(newValue) || 0;
+        } else {
+            item[fieldName] = newValue;
+        }
+        
+        // 추가된 항목인 경우 addedItems도 함께 업데이트
+        if (item._addedId && addedItems[shipmentId]) {
+            const addedItemIndex = addedItems[shipmentId].findIndex(
+                ai => ai._addedId === item._addedId
+            );
+            if (addedItemIndex !== -1) {
+                addedItems[shipmentId][addedItemIndex][fieldName] = item[fieldName];
+                storage.setItem('addedItems', JSON.stringify(addedItems));
+                console.log('✏️ 추가된 품목 업데이트:', item._addedId, fieldName, newValue);
+            }
+        }
+        
+        // storage에 저장
+        if (!itemChanges[storageKey]) itemChanges[storageKey] = {};
+        itemChanges[storageKey][fieldName] = fieldName === '수량' ? parseFloat(newValue) : newValue;
+        storage.setItem('itemChanges', JSON.stringify(itemChanges));
+        
+        // 차트 업데이트 (수량이나 품목명이 변경된 경우)
+        if (fieldName === '수량' || fieldName === '품목명') {
+            applyFilters();
+        }
+    }
+}
+
+function changeBasicField(shipmentId, fieldName, newValue) {
+    // 해당 Shipment의 모든 품목에 동일하게 적용
+    DATA.shipments.forEach(s => { 
+        if (s.Shipment_ID === shipmentId) {
+            s[fieldName] = newValue;
+        }
+    });
+    
+    // storage에 저장
+    if (!basicFieldChanges[shipmentId]) basicFieldChanges[shipmentId] = {};
+    basicFieldChanges[shipmentId][fieldName] = newValue;
+    storage.setItem('basicFieldChanges', JSON.stringify(basicFieldChanges));
+    
+    // 필터 업데이트 (업체명, 작업지, 선사, 유형, 모선명이 변경된 경우)
+    if (fieldName === '업체명' || fieldName === '작업지' || fieldName === '선사' || fieldName === '유형' || fieldName === '모선명') {
+        populateFilters();
+        applyFilters();
+    }
+}
+
+// 품목 추가
+function addItem(shipmentId) {
+    // 해당 Shipment의 첫 번째 항목 가져오기 (기본 정보 복사용)
+    const firstItem = DATA.shipments.find(s => s.Shipment_ID === shipmentId);
+    
+    if (!firstItem) return;
+    
+    // 현재 해당 Shipment의 품목 개수 확인
+    const currentItems = DATA.shipments.filter(s => s.Shipment_ID === shipmentId);
+    const newIndex = currentItems.length;
+    
+    // 고유 ID 생성 (타임스탬프 + 랜덤 문자열)
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 9);
+    const uniqueId = `ADDED_${shipmentId}_${timestamp}_${randomStr}`;
+    
+    // 새 품목 생성 (기본 정보는 복사, 품목 정보는 빈 값)
+    const newItem = {
+        Shipment_ID: shipmentId,
+        출고월: firstItem.출고월,
+        작업일: firstItem.작업일,
+        추가작업일: firstItem.추가작업일 || '',
+        유형: firstItem.유형,
+        업체명: firstItem.업체명,
+        작업지: firstItem.작업지,
+        선사: firstItem.선사,
+        모선명: firstItem.모선명,
+        품목코드: '',
+        품목명: '',
+        수량: 0,
+        단위: 'PLT',
+        서류마감: firstItem.서류마감,
+        카고마감: firstItem.카고마감,
+        출고상태: firstItem.출고상태,
+        _addedId: uniqueId,
+        _isAdded: true,
+        _addedAt: timestamp
+    };
+    
+    // DATA.shipments 배열에 추가
+    DATA.shipments.push(newItem);
+    
+    // 추가된 품목 정보 저장 (전체 정보 저장)
+    if (!addedItems[shipmentId]) addedItems[shipmentId] = [];
+    addedItems[shipmentId].push(newItem);
+    storage.setItem('addedItems', JSON.stringify(addedItems));
+    
+    console.log('✅ 품목 추가:', uniqueId);
+    
+    console.log('✅ 품목 추가:', shipmentId, uniqueId);
+    
+    // 테이블 다시 렌더링
+    applyFilters();
+    
+    alert('✅ 새 품목이 추가되었습니다.\n품목코드, 품목명, 수량을 입력해주세요.');
+}
+
+// 품목 삭제
+function deleteItem(shipmentId, itemIndex) {
+    if (!confirm('이 품목을 삭제하시겠습니까?')) return;
+    
+    // 해당 Shipment의 품목들 찾기
+    const shipmentItems = DATA.shipments.filter(s => s.Shipment_ID === shipmentId);
+    
+    if (shipmentItems.length <= 1) {
+        alert('❌ 최소 1개의 품목은 유지되어야 합니다.');
+        return;
+    }
+    
+    // 삭제할 항목의 실제 인덱스 찾기
+    const itemToDelete = shipmentItems[itemIndex];
+    const actualIndex = DATA.shipments.indexOf(itemToDelete);
+    
+    if (actualIndex !== -1) {
+        // 추가된 항목인지 확인 (_addedId 존재 여부로 판단)
+        if (itemToDelete._addedId) {
+            // 추가된 항목이면 addedItems에서 제거
+            console.log('🗑️ 추가된 품목 삭제:', itemToDelete._addedId);
+            if (addedItems[shipmentId]) {
+                addedItems[shipmentId] = addedItems[shipmentId].filter(
+                    item => item._addedId !== itemToDelete._addedId
+                );
+                if (addedItems[shipmentId].length === 0) {
+                    delete addedItems[shipmentId];
+                }
+                storage.setItem('addedItems', JSON.stringify(addedItems));
+            }
+        } else {
+            // 원본 품목이면 deletedItems에 기록
+            console.log('🗑️ 원본 품목 삭제 기록:', shipmentId, itemIndex);
+            if (!deletedItems[shipmentId]) deletedItems[shipmentId] = [];
+            deletedItems[shipmentId].push({
+                품목코드: itemToDelete.품목코드,
+                품목명: itemToDelete.품목명,
+                수량: itemToDelete.수량,
+                단위: itemToDelete.단위,
+                index: itemIndex,
+                timestamp: Date.now()
+            });
+            storage.setItem('deletedItems', JSON.stringify(deletedItems));
+        }
+        
+        // 배열에서 삭제
+        DATA.shipments.splice(actualIndex, 1);
+        
+        // itemChanges에서도 해당 항목 삭제
+        const storageKey = shipmentId + '_' + itemToDelete.품목코드 + '_' + itemIndex;
+        if (itemChanges[storageKey]) {
+            delete itemChanges[storageKey];
+            storage.setItem('itemChanges', JSON.stringify(itemChanges));
+        }
+        
+        // 테이블 다시 렌더링
+        applyFilters();
+        
+        alert('✅ 품목이 삭제되었습니다.');
+    }
+}
+
+function formatDeadline(dateStr) {
+    if (!dateStr || dateStr === '') return '<span class="deadline-normal">-</span>';
+    
+    const deadline = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    deadline.setHours(0, 0, 0, 0);
+    
+    const diffTime = deadline - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    let className = 'deadline-normal';
+    let badge = '';
+    
+    if (diffDays < 0) {
+        // 지난 날짜
+        className = 'deadline-passed';
+    } else if (diffDays === 0) {
+        // D-Day
+        className = 'deadline-urgent';
+        badge = '<span class="deadline-badge badge-dday">D-Day</span>';
+    } else if (diffDays === 1) {
+        // D-1
+        className = 'deadline-urgent';
+        badge = '<span class="deadline-badge badge-d2">D-1</span>';
+    } else if (diffDays === 2) {
+        // D-2
+        className = 'deadline-urgent';
+        badge = '<span class="deadline-badge badge-d2">D-2</span>';
+    } else if (diffDays === 3) {
+        // D-3
+        className = 'deadline-warning';
+        badge = '<span class="deadline-badge badge-d3">D-3</span>';
+    }
+    
+    return `<span class="${className}">${dateStr}${badge}</span>`;
+}
+
+function getDeadlineBadge(dateStr) {
+    if (!dateStr || dateStr === '') return '';
+    
+    const deadline = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    deadline.setHours(0, 0, 0, 0);
+    
+    const diffTime = deadline - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+        return '';
+    } else if (diffDays === 0) {
+        return '<span class="deadline-badge badge-dday" style="margin-left: 0.5rem;">D-Day</span>';
+    } else if (diffDays === 1) {
+        return '<span class="deadline-badge badge-d2" style="margin-left: 0.5rem;">D-1</span>';
+    } else if (diffDays === 2) {
+        return '<span class="deadline-badge badge-d2" style="margin-left: 0.5rem;">D-2</span>';
+    } else if (diffDays === 3) {
+        return '<span class="deadline-badge badge-d3" style="margin-left: 0.5rem;">D-3</span>';
+    }
+    
+    return '';
+}
+
+function populateSimulatorProducts() {
+    const select = document.getElementById('simProduct');
+    select.innerHTML = '<option value="">선택하세요</option>';
+    DATA.cargo_sizes.forEach(item => select.add(new Option(item.품목명 + ' (' + item.품목코드 + ')', JSON.stringify(item))));
+}
+
+function addProduct() {
+    const select = document.getElementById('simProduct');
+    const quantityInput = document.getElementById('simQuantity');
+    if (!select.value) return alert('품목을 선택해주세요.');
+    const quantity = parseInt(quantityInput.value);
+    if (!quantity || quantity <= 0) return alert('수량을 입력해주세요.');
+    const item = JSON.parse(select.value);
+    const sizes = item['화물 사이즈 (1PLT 기준)'].split('*').map(Number);
+    addedProducts.push({ code: item.품목코드, name: item.품목명, quantity: quantity, width: sizes[0] || 1100, depth: sizes[1] || 1100, height: sizes[2] || 1100 });
+    updateAddedItemsList();
+    select.value = '';
+    quantityInput.value = '';
+    
+    // 자동으로 계산 실행
+    calculateContainer();
+}
+
+function updateAddedItemsList() {
+    const container = document.getElementById('addedItems');
+    const listDiv = document.getElementById('itemsList');
+    if (addedProducts.length === 0) { container.style.display = 'none'; return; }
+    container.style.display = 'block';
+    listDiv.innerHTML = '';
+    addedProducts.forEach((prod, index) => {
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.innerHTML = `<div>
+            <div style="font-weight: 600; color: var(--text-primary);">${prod.name} (${prod.code})</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                수량: ${prod.quantity} PLT | 크기: ${prod.width}×${prod.depth}×${prod.height}mm
+            </div>
+        </div>
+        <button style="background:transparent;border:none;color:var(--accent-red);cursor:pointer;font-size:1.25rem;" onclick="removeProduct(${index})">✕</button>`;
+        listDiv.appendChild(row);
+    });
+}
+
+function removeProduct(index) { 
+    addedProducts.splice(index, 1); 
+    updateAddedItemsList(); 
+    
+    // 품목이 남아있으면 자동으로 재계산
+    if (addedProducts.length > 0) {
+        calculateContainer();
+    } else {
+        // 품목이 없으면 결과 숨기기
+        document.getElementById('simResult').classList.remove('show');
+    }
+}
+
+function clearProducts() { addedProducts = []; updateAddedItemsList(); document.getElementById('simResult').classList.remove('show'); }
+
+// ==================== 저장/불러오기 기능 ====================
+
+function saveChanges() {
+    if (!DATA.shipments || DATA.shipments.length === 0) {
+        return alert('저장할 데이터가 없습니다. 먼저 엑셀을 업로드하세요.');
+    }
+    
+    const saveData = {
+        version: '1.6.1',
+        timestamp: new Date().toISOString(),
+        statusChanges: statusChanges,
+        dateChanges: dateChanges,
+        itemChanges: itemChanges,
+        basicFieldChanges: basicFieldChanges,
+        addedItems: addedItems,      // 추가된 품목
+        deletedItems: deletedItems,   // 삭제된 품목
+        metadata: {
+            totalShipments: DATA.shipments.length,
+            savedAt: new Date().toLocaleString('ko-KR')
+        }
+    };
+    
+    const jsonStr = JSON.stringify(saveData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    
+    // 한국 시간(KST, UTC+9)으로 날짜 생성
+    const now = new Date();
+    const kstOffset = 9 * 60; // 9시간을 분으로
+    const kstTime = new Date(now.getTime() + (kstOffset * 60 * 1000));
+    const kstDate = kstTime.toISOString().split('T')[0].replace(/-/g, '');
+    a.download = `출고관리_수정사항_${kstDate}.json`;
+    
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    alert('✅ 수정사항이 저장되었습니다!\n\n파일명: ' + a.download + '\n\n이 파일을 OneDrive/Teams에 공유하면\n다른 담당자들도 불러올 수 있습니다.');
+}
+
+// 수정사항 불러오기
+document.getElementById('changesInput').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (!DATA.shipments || DATA.shipments.length === 0) {
+        alert('⚠️ 먼저 원본 엑셀을 업로드하세요!');
+        event.target.value = '';
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const loadedData = JSON.parse(e.target.result);
+            
+            // 데이터 검증
+            if (!loadedData.version || !loadedData.statusChanges) {
+                throw new Error('올바른 수정사항 파일이 아닙니다.');
+            }
+            
+            // 수정사항 적용
+            statusChanges = loadedData.statusChanges || {};
+            dateChanges = loadedData.dateChanges || {};
+            itemChanges = loadedData.itemChanges || {};
+            basicFieldChanges = loadedData.basicFieldChanges || {};
+            addedItems = loadedData.addedItems || {};
+            deletedItems = loadedData.deletedItems || {};
+            
+            // storage에 저장
+            storage.setItem('statusChanges', JSON.stringify(statusChanges));
+            storage.setItem('dateChanges', JSON.stringify(dateChanges));
+            storage.setItem('itemChanges', JSON.stringify(itemChanges));
+            storage.setItem('basicFieldChanges', JSON.stringify(basicFieldChanges));
+            storage.setItem('addedItems', JSON.stringify(addedItems));
+            storage.setItem('deletedItems', JSON.stringify(deletedItems));
+            
+            // 데이터 재적용
+            applyChangesToData();
+            
+            // 화면 새로고침
+            updateTotalContainers();
+            applyFilters();
+            
+            const savedAt = loadedData.metadata?.savedAt || '알 수 없음';
+            alert('✅ 수정사항을 불러왔습니다!\n\n저장 일시: ' + savedAt + '\n적용된 변경사항: ' + Object.keys(statusChanges).length + '건');
+            
+        } catch (error) {
+            console.error('불러오기 오류:', error);
+            alert('❌ 수정사항 파일을 불러오는데 실패했습니다.\n\n' + error.message);
+        }
+    };
+    
+    reader.onerror = function() {
+        alert('❌ 파일 읽기에 실패했습니다.');
+    };
+    
+    reader.readAsText(file);
+    event.target.value = '';
+});
+
+function applyChangesToData() {
+    console.log('=== applyChangesToData 시작 ===');
+    console.log('삭제 대상:', deletedItems);
+    console.log('추가 대상:', addedItems);
+    
+    // 1. 먼저 삭제된 품목 제거
+    Object.keys(deletedItems).forEach(shipmentId => {
+        const itemsToDelete = deletedItems[shipmentId];
+        itemsToDelete.forEach(deletedItem => {
+            // 작업일도 비교하여 정확한 매칭
+            let indexToRemove = -1;
+            const shipmentItems = DATA.shipments.filter(s => s.Shipment_ID === shipmentId);
+            
+            // 인덱스와 품목 정보로 매칭
+            if (deletedItem.index !== undefined && deletedItem.index < shipmentItems.length) {
+                const targetItem = shipmentItems[deletedItem.index];
+                if (targetItem && 
+                    targetItem.품목코드 === deletedItem.품목코드 &&
+                    targetItem.품목명 === deletedItem.품목명) {
+                    indexToRemove = DATA.shipments.indexOf(targetItem);
+                }
+            }
+            
+            // 인덱스 매칭 실패 시 품목 정보로 찾기
+            if (indexToRemove === -1) {
+                indexToRemove = DATA.shipments.findIndex(s => 
+                    s.Shipment_ID === shipmentId && 
+                    s.품목코드 === deletedItem.품목코드 &&
+                    s.품목명 === deletedItem.품목명 &&
+                    !s._isNew  // 새로 추가된 항목은 제외
+                );
+            }
+            
+            if (indexToRemove !== -1) {
+                console.log(`삭제: ${shipmentId} - ${deletedItem.품목명}`);
+                DATA.shipments.splice(indexToRemove, 1);
+            }
+        });
+    });
+    
+    // 2. 추가된 품목 추가
+    Object.keys(addedItems).forEach(shipmentId => {
+        const itemsToAdd = addedItems[shipmentId];
+        
+        itemsToAdd.forEach(addedItem => {
+            // 이미 추가되어 있는지 확인 (_addedId로 확인)
+            const alreadyExists = DATA.shipments.some(s => s._addedId === addedItem._addedId);
+            
+            if (!alreadyExists) {
+                // 저장된 전체 정보 사용 (품목코드, 품목명, 수량 포함)
+                console.log(`추가: ${shipmentId} - ${addedItem.품목명 || '(빈품목)'} (${addedItem._addedId})`);
+                DATA.shipments.push(addedItem);
+            }
+        });
+    });
+    
+    console.log('=== applyChangesToData 완료 ===');
+    console.log('최종 데이터 개수:', DATA.shipments.length);
+    
+    // 3. 품목 변경사항 적용을 위한 매핑
+    const shipmentGroups = {};
+    DATA.shipments.forEach(s => {
+        if (!shipmentGroups[s.Shipment_ID]) shipmentGroups[s.Shipment_ID] = [];
+        shipmentGroups[s.Shipment_ID].push(s);
+    });
+    
+    DATA.shipments.forEach(s => {
+        // 출고상태 변경사항 적용
+        if (statusChanges[s.Shipment_ID]) {
+            s.출고상태 = statusChanges[s.Shipment_ID];
+        }
+        
+        // 작업일 변경사항 적용
+        if (dateChanges[s.Shipment_ID]) {
+            if (typeof dateChanges[s.Shipment_ID] === 'string') {
+                s.작업일 = dateChanges[s.Shipment_ID];
+            } else {
+                if (dateChanges[s.Shipment_ID].작업일) s.작업일 = dateChanges[s.Shipment_ID].작업일;
+                if (dateChanges[s.Shipment_ID].추가작업일) s.추가작업일 = dateChanges[s.Shipment_ID].추가작업일;
+                if (dateChanges[s.Shipment_ID].서류마감) s.서류마감 = dateChanges[s.Shipment_ID].서류마감;
+                if (dateChanges[s.Shipment_ID].카고마감) s.카고마감 = dateChanges[s.Shipment_ID].카고마감;
+            }
+        }
+        
+        // 기본 필드 변경사항 적용 (업체명, 작업지, 선사, 유형, 모선명)
+        if (basicFieldChanges[s.Shipment_ID]) {
+            const changes = basicFieldChanges[s.Shipment_ID];
+            if (changes.업체명) s.업체명 = changes.업체명;
+            if (changes.작업지) s.작업지 = changes.작업지;
+            if (changes.선사) s.선사 = changes.선사;
+            if (changes.유형) s.유형 = changes.유형;
+            if (changes.모선명) s.모선명 = changes.모선명;
+        }
+        
+        // 품목 변경사항 적용
+        const items = shipmentGroups[s.Shipment_ID];
+        const itemIndex = items.indexOf(s);
+        const itemKey = s.Shipment_ID + '_' + s.품목코드 + '_' + itemIndex;
+        
+        if (itemChanges[itemKey]) {
+            const changes = itemChanges[itemKey];
+            if (changes.품목코드) s.품목코드 = changes.품목코드;
+            if (changes.품목명) s.품목명 = changes.품목명;
+            if (changes.수량 !== undefined) s.수량 = changes.수량;
+            if (changes.단위) s.단위 = changes.단위;
+        }
+    });
+}
+
+function exportToExcel() {
+    if (!DATA.shipments || DATA.shipments.length === 0) {
+        return alert('내보낼 데이터가 없습니다. 먼저 엑셀을 업로드하세요.');
+    }
+    
+    try {
+        // 현재 상태의 데이터를 엑셀 형식으로 변환
+        const exportData = DATA.shipments.map(s => ({
+            'Shipment_ID': s.Shipment_ID,
+            '출고월': s.출고월,
+            '작업일': s.작업일,
+            '유형': s.유형,
+            '업체명': s.업체명,
+            '작업지': s.작업지,
+            '선사': s.선사,
+            '모선명': s.모선명,
+            '품목코드': s.품목코드,
+            '품목명': s.품목명,
+            '수량': s.수량,
+            '단위': s.단위,
+            '서류마감': s.서류마감,
+            '카고마감': s.카고마감,
+            '출고상태': s.출고상태
+        }));
+        
+        // 워크북 생성
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        
+        // 컬럼 너비 설정
+        ws['!cols'] = [
+            { wch: 15 }, // Shipment_ID
+            { wch: 10 }, // 출고월
+            { wch: 12 }, // 작업일
+            { wch: 8 },  // 유형
+            { wch: 15 }, // 업체명
+            { wch: 10 }, // 작업지
+            { wch: 10 }, // 선사
+            { wch: 20 }, // 모선명
+            { wch: 15 }, // 품목코드
+            { wch: 30 }, // 품목명
+            { wch: 10 }, // 수량
+            { wch: 8 },  // 단위
+            { wch: 12 }, // 서류마감
+            { wch: 12 }, // 카고마감
+            { wch: 12 }  // 출고상태
+        ];
+        
+        XLSX.utils.book_append_sheet(wb, ws, 'Shipment_Master');
+        
+        // 화물 사이즈 시트도 추가
+        if (DATA.cargo_sizes && DATA.cargo_sizes.length > 0) {
+            const sizeData = DATA.cargo_sizes.map(c => ({
+                '품목코드': c.품목코드,
+                '품목명': c.품목명,
+                '화물 사이즈 (1PLT 기준)': c['화물 사이즈 (1PLT 기준)']
+            }));
+            const wsSize = XLSX.utils.json_to_sheet(sizeData);
+            XLSX.utils.book_append_sheet(wb, wsSize, '화물 사이즈');
+        }
+        
+        // 파일 저장
+        const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+        const filename = `출고관리_수정본_${today}.xlsx`;
+        XLSX.writeFile(wb, filename);
+        
+        alert('✅ 엑셀 파일로 내보내기 완료!\n\n파일명: ' + filename + '\n\n수정사항이 모두 반영되었습니다.');
+        
+    } catch (error) {
+        console.error('내보내기 오류:', error);
+        alert('❌ 엑셀 내보내기에 실패했습니다.\n\n' + error.message);
+    }
+}
+
+function resetData() {
+    if (!confirm('⚠️ 모든 수정사항을 삭제하고 원본 상태로 되돌리시겠습니까?\n\n이 작업은 취소할 수 없습니다!')) {
+        return;
+    }
+    
+    // storage 초기화
+    storage.removeItem('statusChanges');
+    storage.removeItem('dateChanges');
+    storage.removeItem('itemChanges');
+    storage.removeItem('basicFieldChanges');
+    
+    // 메모리 초기화
+    statusChanges = {};
+    dateChanges = {};
+    itemChanges = {};
+    basicFieldChanges = {};
+    
+    alert('✅ 초기화 완료!\n\n원본 엑셀을 다시 업로드하면\n처음 상태로 돌아갑니다.');
+    
+    // 페이지 새로고침
+    location.reload();
+}
+
+function calculateContainer() {
+    if (addedProducts.length === 0) return alert('품목을 추가해주세요.');
+    
+    // 40'HC 컨테이너 내부 치수 (mm)
+    const CONTAINER = {
+        length: 12032,
+        width: 2352,
+        height: 2698
+    };
+    
+    console.log('=== 컨테이너 적재 분석 시작 ===');
+    console.log('컨테이너 내부 치수:', CONTAINER);
+    
+    // 각 품목별 적재 가능 수량 계산
+    let detailedResults = [];
+    
+    addedProducts.forEach((product, idx) => {
+        const w = product.width;
+        const d = product.depth;
+        const h = product.height;
+        
+        console.log(`\n품목 ${idx + 1}: ${product.name} (${product.code})`);
+        console.log(`화물 사이즈: ${w}×${d}×${h}mm`);
+        console.log(`수량: ${product.quantity} PLT`);
+        
+        // 여러 배치 패턴 시도
+        const patterns = [];
+        
+        // 패턴 1: 정방향 배치 (width를 길이 방향으로)
+        const p1_length = Math.floor(CONTAINER.length / w);
+        const p1_width = Math.floor(CONTAINER.width / d);
+        const p1_perLayer = p1_length * p1_width;
+        patterns.push({
+            name: '정방향',
+            perLayer: p1_perLayer,
+            layout: `${p1_length}×${p1_width}`
+        });
+        
+        // 패턴 2: 회전 배치 (depth를 길이 방향으로)
+        const p2_length = Math.floor(CONTAINER.length / d);
+        const p2_width = Math.floor(CONTAINER.width / w);
+        const p2_perLayer = p2_length * p2_width;
+        patterns.push({
+            name: '회전',
+            perLayer: p2_perLayer,
+            layout: `${p2_length}×${p2_width}`
+        });
+        
+        // 최적 패턴 선택
+        const bestPattern = patterns.reduce((best, curr) => 
+            curr.perLayer > best.perLayer ? curr : best
+        );
+        
+        // 2단 적재 가능 여부 확인
+        const canStack2Layers = (h * 2) <= CONTAINER.height;
+        const layersCount = canStack2Layers ? 2 : 1;
+        const palletsPerContainer = bestPattern.perLayer * layersCount;
+        
+        console.log(`최적 배치: ${bestPattern.name} (${bestPattern.layout})`);
+        console.log(`1단: ${bestPattern.perLayer} PLT`);
+        console.log(`2단 적재 가능: ${canStack2Layers ? 'YES' : 'NO'} (높이: ${h * 2}mm)`);
+        console.log(`총 적재량: ${palletsPerContainer} PLT/컨테이너`);
+        
+        // 필요 컨테이너 수 계산
+        const containersNeeded = Math.ceil(product.quantity / palletsPerContainer);
+        const totalCapacity = containersNeeded * palletsPerContainer;
+        const surplus = totalCapacity - product.quantity; // 여유 공간
+        const shortage = 0; // 단일 품목 계산에서는 부족 없음
+        
+        detailedResults.push({
+            name: product.name,
+            code: product.code,
+            quantity: product.quantity,
+            size: `${w}×${d}×${h}`,
+            pattern: bestPattern.name,
+            layout: bestPattern.layout,
+            perLayer: bestPattern.perLayer,
+            layers: layersCount,
+            palletsPerContainer: palletsPerContainer,
+            containersNeeded: containersNeeded,
+            totalCapacity: totalCapacity,
+            surplus: surplus,
+            shortage: shortage,
+            canStack: canStack2Layers
+        });
+    });
+    
+    // 전체 혼합 적재 분석
+    const totalQuantity = addedProducts.reduce((sum, p) => sum + p.quantity, 0);
+    
+    // 혼합 적재 시 최소 적재량 기준으로 계산 (보수적 접근)
+    const minPalletsPerContainer = Math.min(...detailedResults.map(r => r.palletsPerContainer));
+    const totalContainersNeeded = Math.ceil(totalQuantity / minPalletsPerContainer);
+    const totalCapacity = totalContainersNeeded * minPalletsPerContainer;
+    const totalSurplus = totalCapacity - totalQuantity;
+    const efficiency = Math.round((totalQuantity / totalCapacity) * 100);
+    
+    console.log('\n=== 혼합 적재 종합 분석 ===');
+    console.log(`총 수량: ${totalQuantity} PLT`);
+    console.log(`컨테이너당 최소 적재량: ${minPalletsPerContainer} PLT`);
+    console.log(`필요 컨테이너: ${totalContainersNeeded}대`);
+    console.log(`총 수용 가능: ${totalCapacity} PLT`);
+    console.log(`여유 공간: ${totalSurplus} PLT`);
+    console.log(`공간 효율: ${efficiency}%`);
+    
+    // 컨테이너별 적재 상세 분석
+    const containerAllocation = analyzeContainerAllocation(detailedResults, totalContainersNeeded, minPalletsPerContainer);
+    
+    // 결과 표시
+    document.getElementById('resultContainers').textContent = totalContainersNeeded + '대';
+    document.getElementById('resultPallets').textContent = minPalletsPerContainer + ' PLT (최소 기준)';
+    document.getElementById('resultEfficiency').textContent = efficiency + '%';
+    
+    // 상세 정보 표시
+    displayDetailedResults(detailedResults, totalQuantity, totalContainersNeeded, totalSurplus, containerAllocation);
+    
+    document.getElementById('simResult').classList.add('show');
+}
+
+function analyzeContainerAllocation(results, totalContainers, minCapacity) {
+    const allocation = [];
+    let remainingByProduct = results.map(r => ({
+        name: r.name,
+        code: r.code,
+        remaining: r.quantity
+    }));
+    
+    for (let i = 0; i < totalContainers; i++) {
+        let containerLoad = 0;
+        let items = [];
+        
+        // 각 품목에서 가능한 만큼 할당
+        remainingByProduct.forEach(prod => {
+            if (prod.remaining > 0) {
+                const toLoad = Math.min(prod.remaining, minCapacity - containerLoad);
+                if (toLoad > 0) {
+                    items.push({
+                        name: prod.name,
+                        code: prod.code,
+                        quantity: toLoad
+                    });
+                    containerLoad += toLoad;
+                    prod.remaining -= toLoad;
+                }
+            }
+        });
+        
+        allocation.push({
+            containerNumber: i + 1,
+            items: items,
+            totalLoaded: containerLoad,
+            capacity: minCapacity,
+            surplus: minCapacity - containerLoad,
+            utilization: Math.round((containerLoad / minCapacity) * 100)
+        });
+    }
+    
+    return allocation;
+}
+
+function displayDetailedResults(results, totalQty, totalContainers, totalSurplus, containerAllocation) {
+    // 상세 결과 HTML 생성
+    let detailsHtml = '<div style="margin-top: 1rem; padding: 1rem; background: rgba(0, 212, 255, 0.05); border-radius: 8px; border: 1px solid rgba(0, 212, 255, 0.2);">';
+    
+    // 컨테이너 정보
+    detailsHtml += '<div style="padding: 0.75rem; background: rgba(0, 212, 255, 0.1); border-radius: 6px; margin-bottom: 1rem; font-size: 0.8rem;">';
+    detailsHtml += '<div style="color: var(--accent-cyan); font-weight: 600; margin-bottom: 0.5rem;">📐 40\'HC 컨테이너 내부 치수</div>';
+    detailsHtml += '<div style="color: var(--text-secondary);">길이 12,032mm × 너비 2,352mm × 높이 2,698mm</div>';
+    detailsHtml += '</div>';
+    
+    // 전체 요약
+    detailsHtml += '<div style="padding: 0.75rem; background: rgba(0, 255, 136, 0.1); border-radius: 6px; margin-bottom: 1rem; border: 1px solid rgba(0, 255, 136, 0.3);">';
+    detailsHtml += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; font-size: 0.8rem;">';
+    detailsHtml += `<div><div style="color: var(--text-secondary); font-size: 0.7rem;">총 수량</div><div style="color: var(--text-primary); font-weight: 600; font-size: 1.1rem;">${totalQty} PLT</div></div>`;
+    detailsHtml += `<div><div style="color: var(--text-secondary); font-size: 0.7rem;">필요 컨테이너</div><div style="color: var(--accent-blue); font-weight: 600; font-size: 1.1rem;">${totalContainers}대</div></div>`;
+    detailsHtml += `<div><div style="color: var(--text-secondary); font-size: 0.7rem;">여유 공간</div><div style="color: var(--accent-green); font-weight: 600; font-size: 1.1rem;">${totalSurplus} PLT</div></div>`;
+    detailsHtml += '</div>';
+    detailsHtml += '</div>';
+    
+    // 품목별 분석
+    detailsHtml += '<h4 style="color: var(--accent-blue); margin-bottom: 0.75rem; font-size: 0.875rem;">📦 품목별 적재 분석</h4>';
+    
+    results.forEach(r => {
+        const stackInfo = r.canStack ? `2단 (${r.perLayer}×2)` : `1단만 (높이 초과)`;
+        const surplusColor = r.surplus > 0 ? 'var(--accent-green)' : 'var(--text-secondary)';
+        
+        detailsHtml += `<div style="padding: 0.75rem; margin-bottom: 0.75rem; background: rgba(26, 31, 58, 0.5); border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);">`;
+        detailsHtml += `<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">`;
+        detailsHtml += `<div style="color: var(--text-primary); font-weight: 600;">${r.name} (${r.code})</div>`;
+        detailsHtml += `<div style="text-align: right;">`;
+        detailsHtml += `<div style="color: var(--accent-blue); font-weight: 600;">${r.containersNeeded}대 필요</div>`;
+        detailsHtml += `</div>`;
+        detailsHtml += `</div>`;
+        
+        detailsHtml += `<div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 0.5rem;">`;
+        detailsHtml += `크기: ${r.size}mm | 배치: ${r.pattern} ${r.layout} | ${stackInfo}`;
+        detailsHtml += `</div>`;
+        
+        detailsHtml += `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; font-size: 0.75rem;">`;
+        detailsHtml += `<div style="padding: 0.5rem; background: rgba(0, 212, 255, 0.1); border-radius: 4px;">`;
+        detailsHtml += `<div style="color: var(--text-secondary);">요청 수량</div>`;
+        detailsHtml += `<div style="color: var(--text-primary); font-weight: 600;">${r.quantity} PLT</div>`;
+        detailsHtml += `</div>`;
+        detailsHtml += `<div style="padding: 0.5rem; background: rgba(0, 212, 255, 0.1); border-radius: 4px;">`;
+        detailsHtml += `<div style="color: var(--text-secondary);">컨테이너당 적재</div>`;
+        detailsHtml += `<div style="color: var(--accent-green); font-weight: 600;">${r.palletsPerContainer} PLT</div>`;
+        detailsHtml += `</div>`;
+        detailsHtml += `<div style="padding: 0.5rem; background: rgba(0, 212, 255, 0.1); border-radius: 4px;">`;
+        detailsHtml += `<div style="color: var(--text-secondary);">총 수용 가능</div>`;
+        detailsHtml += `<div style="color: var(--text-primary); font-weight: 600;">${r.totalCapacity} PLT</div>`;
+        detailsHtml += `</div>`;
+        detailsHtml += `<div style="padding: 0.5rem; background: rgba(0, 255, 136, 0.1); border-radius: 4px;">`;
+        detailsHtml += `<div style="color: var(--text-secondary);">여유 공간</div>`;
+        detailsHtml += `<div style="color: ${surplusColor}; font-weight: 600;">+${r.surplus} PLT</div>`;
+        detailsHtml += `</div>`;
+        detailsHtml += `</div>`;
+        
+        detailsHtml += `</div>`;
+    });
+    
+    // 컨테이너별 할당 상세
+    if (containerAllocation && containerAllocation.length > 0) {
+        detailsHtml += '<h4 style="color: var(--accent-blue); margin: 1.5rem 0 0.75rem 0; font-size: 0.875rem;">🚢 컨테이너별 적재 상세</h4>';
+        
+        containerAllocation.forEach(container => {
+            const isFullyLoaded = container.utilization === 100;
+            const utilizationColor = container.utilization >= 90 ? 'var(--accent-green)' : container.utilization >= 70 ? '#ffa500' : 'var(--accent-red)';
+            
+            detailsHtml += `<div style="padding: 0.75rem; margin-bottom: 0.5rem; background: rgba(26, 31, 58, 0.3); border-radius: 6px; border-left: 3px solid ${utilizationColor};">`;
+            detailsHtml += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">`;
+            detailsHtml += `<div style="color: var(--text-primary); font-weight: 600;">컨테이너 #${container.containerNumber}</div>`;
+            detailsHtml += `<div style="color: ${utilizationColor}; font-weight: 600;">${container.utilization}% 적재</div>`;
+            detailsHtml += `</div>`;
+            
+            // 적재 품목
+            container.items.forEach(item => {
+                detailsHtml += `<div style="color: var(--text-secondary); font-size: 0.75rem; padding: 0.25rem 0;">`;
+                detailsHtml += `• ${item.name} (${item.code}): ${item.quantity} PLT`;
+                detailsHtml += `</div>`;
+            });
+            
+            detailsHtml += `<div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.75rem;">`;
+            detailsHtml += `<div style="color: var(--text-secondary);">적재: ${container.totalLoaded} PLT / ${container.capacity} PLT`;
+            if (container.surplus > 0) {
+                detailsHtml += ` <span style="color: var(--accent-green);">(여유: ${container.surplus} PLT)</span>`;
+            }
+            detailsHtml += `</div>`;
+            detailsHtml += `</div>`;
+            
+            detailsHtml += `</div>`;
+        });
+    }
+    
+    detailsHtml += '</div>';
+    
+    // 기존 결과 div 다음에 추가
+    const resultDiv = document.getElementById('simResult');
+    const existingDetails = resultDiv.querySelector('.detailed-results');
+    if (existingDetails) {
+        existingDetails.remove();
+    }
+    
+    const detailsDiv = document.createElement('div');
+    detailsDiv.className = 'detailed-results';
+    detailsDiv.innerHTML = detailsHtml;
+    resultDiv.appendChild(detailsDiv);
+}
+
+function calculateOptimalLayout(containerLength, containerWidth, products) {
+    // 이 함수는 더 이상 사용하지 않지만 호환성을 위해 유지
+    return {
+        name: '표준 배치',
+        perLayer: 20,
+        palletsPerContainer: 40
+    };
+}
+
+// ==================== 모바일 최적화 기능 ====================
+
+// 모바일 감지
+function isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// iOS 감지
+function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
+// Android 감지
+function isAndroid() {
+    return /Android/i.test(navigator.userAgent);
+}
+
+// 설치 안내 표시
+function showInstallGuide() {
+    let message = '📱 홈 화면에 추가하는 방법:\n\n';
+    
+    if (isIOS()) {
+        message += '【iOS Safari】\n';
+        message += '1. 하단 공유 버튼 (⬆️) 탭\n';
+        message += '2. "홈 화면에 추가" 선택\n';
+        message += '3. "추가" 탭\n\n';
+        message += '※ Safari 브라우저를 사용해주세요';
+    } else if (isAndroid()) {
+        message += '【Android Chrome】\n';
+        message += '1. 우측 상단 메뉴 (⋮) 탭\n';
+        message += '2. "홈 화면에 추가" 선택\n';
+        message += '3. "추가" 탭\n\n';
+        message += '또는\n\n';
+        message += '【Android Samsung Internet】\n';
+        message += '1. 하단 메뉴 (≡) 탭\n';
+        message += '2. "페이지 추가" 선택\n';
+        message += '3. "홈 화면" 선택';
+    } else {
+        message += '【PC/데스크톱】\n';
+        message += '브라우저 주소창 우측의\n';
+        message += '북마크 또는 설치 아이콘을\n';
+        message += '클릭하세요.\n\n';
+        message += '모바일에서 접속하시면\n';
+        message += '앱처럼 사용할 수 있습니다.';
+    }
+    
+    alert(message);
+}
+
+// 설치 배너 닫기
+function closeInstallBanner() {
+    const banner = document.getElementById('installBanner');
+    if (banner) {
+        banner.classList.remove('show');
+        localStorage.setItem('mobile-guide-dismissed', 'true');
+    }
+}
+
+// 모바일에서 자동으로 배너 표시
+if (isMobile() && !localStorage.getItem('mobile-guide-dismissed')) {
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            const banner = document.getElementById('installBanner');
+            if (banner) {
+                banner.classList.add('show');
+            }
+        }, 3000); // 3초 후 표시
+    });
+}
+
+// 모바일 뷰포트 높이 조정 (주소창 숨김 대응)
+function setVH() {
+    let vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
+if (isMobile()) {
+    setVH();
+    window.addEventListener('resize', setVH);
+}
+
+// 더블탭 줌 방지 (선택사항)
+if (isMobile()) {
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (event) => {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
+}
+
+// 풀스크린 모드 토글 (모바일)
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            console.log('풀스크린 모드 불가:', err);
+        });
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+// 페이지 새로고침 방지 (스와이프 다운)
+if (isMobile()) {
+    let startY = 0;
+    document.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].pageY;
+    }, { passive: true });
+    
+    document.addEventListener('touchmove', (e) => {
+        const y = e.touches[0].pageY;
+        if (startY < y && window.scrollY === 0) {
+            // 상단에서 아래로 스와이프 시 새로고침 방지하지 않음
+            // 기본 동작 허용
+        }
+    }, { passive: true });
+}
+
+// 터치 피드백 추가
+if (isMobile()) {
+    document.addEventListener('touchstart', (e) => {
+        if (e.target.tagName === 'BUTTON' || 
+            e.target.classList.contains('status-badge') ||
+            e.target.classList.contains('clickable')) {
+            e.target.style.opacity = '0.7';
+        }
+    }, { passive: true });
+    
+    document.addEventListener('touchend', (e) => {
+        if (e.target.tagName === 'BUTTON' || 
+            e.target.classList.contains('status-badge') ||
+            e.target.classList.contains('clickable')) {
+            setTimeout(() => {
+                e.target.style.opacity = '1';
+            }, 100);
+        }
+    }, { passive: true });
+}
+
+// 가로 스크롤 개선 (테이블)
+if (isMobile()) {
+    const tables = document.querySelectorAll('.table-container');
+    tables.forEach(table => {
+        let isScrolling = false;
+        let startX = 0;
+        let scrollLeft = 0;
+        
+        table.addEventListener('touchstart', (e) => {
+            isScrolling = true;
+            startX = e.touches[0].pageX - table.offsetLeft;
+            scrollLeft = table.scrollLeft;
+        }, { passive: true });
+        
+        table.addEventListener('touchmove', (e) => {
+            if (!isScrolling) return;
+            const x = e.touches[0].pageX - table.offsetLeft;
+            const walk = (x - startX) * 2;
+            table.scrollLeft = scrollLeft - walk;
+        }, { passive: true });
+        
+        table.addEventListener('touchend', () => {
+            isScrolling = false;
+        }, { passive: true });
+    });
+}
+
+// 화면 회전 감지
+if (isMobile()) {
+    window.addEventListener('orientationchange', () => {
+        setTimeout(() => {
+            setVH();
+            // 차트 리사이즈
+            if (carrierChart) carrierChart.resize();
+            if (vendorChart) vendorChart.resize();
+            if (locationChart) locationChart.resize();
+        }, 200);
+    });
+}
+
+// 네트워크 상태 모니터링
+window.addEventListener('online', () => {
+    console.log('✅ 온라인 상태');
+    // 필요시 알림 표시
+});
+
+window.addEventListener('offline', () => {
+    console.log('📴 오프라인 상태');
+    // 필요시 알림 표시
+    if (isMobile()) {
+        alert('⚠️ 네트워크 연결이 끊어졌습니다.\n일부 기능이 제한될 수 있습니다.');
+    }
+});
+
+console.log('📱 모바일 최적화 기능 활성화됨');
+console.log('디바이스:', isMobile() ? '모바일' : '데스크톱');
+if (isMobile()) {
+    console.log('OS:', isIOS() ? 'iOS' : isAndroid() ? 'Android' : '기타');
+}
+    </script>
+</body>
+</html>
